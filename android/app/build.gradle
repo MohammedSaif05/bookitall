@@ -84,6 +84,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        ndk { abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64" }
     }
     signingConfigs {
         debug {
@@ -102,7 +103,60 @@ android {
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+    packagingOptions {
+        pickFirst 'lib/x86/libc++_shared.so'
+        pickFirst 'lib/x86_64/libc++_shared.so'
+        pickFirst 'lib/armeabi-v7a/libc++_shared.so'
+        pickFirst 'lib/arm64-v8a/libc++_shared.so'
+    }
+}
+
+afterEvaluate {
+    def patchBuildNinja = { cxxDir ->
+        if (cxxDir.exists()) {
+            cxxDir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+                if (file.name == "build.ninja") {
+                    def content = file.text
+                    def newContent = content
+                    if (content.contains("LINK_LIBRARIES") && content.contains("-latomic") && !content.contains("-lc++")) {
+                        newContent = newContent.replaceAll(/(\s+)(-latomic)/, '$1 -lc++ $2')
+                        if (newContent != content) {
+                            file.text = newContent
+                            println "✅ Patched build.ninja to link libc++: ${file.path}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    def patchAllCxxDirs = {
+        def rootDir = file("${project.projectDir}/../..")
+        patchBuildNinja(file("${project.projectDir}/.cxx"))
+        def nodeModulesDir = file("${rootDir}/node_modules")
+        if (nodeModulesDir.exists()) {
+            nodeModulesDir.eachDir { moduleDir ->
+                def moduleCxxDir = file("${moduleDir}/android/.cxx")
+                patchBuildNinja(moduleCxxDir)
+            }
+        }
+    }
+    tasks.matching { it.name.matches(".*configureCMake.*") && it.project == project }.configureEach { task ->
+        doLast { patchAllCxxDirs() }
+    }
+    tasks.matching { it.name.matches(".*buildCMake.*") }.configureEach { task ->
+        doFirst {
+            patchBuildNinja(file("${project.projectDir}/.cxx"))
+            def nodeModulesDir = file("${project.projectDir}/../../node_modules")
+            if (nodeModulesDir.exists()) {
+                nodeModulesDir.eachDir { moduleDir ->
+                    def moduleCxxDir = file("${moduleDir}/android/.cxx")
+                    patchBuildNinja(moduleCxxDir)
+                }
+            }
         }
     }
 }

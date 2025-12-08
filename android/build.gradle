@@ -19,3 +19,32 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Patch build.ninja to ensure libc++ is linked when C++ native code is present
+gradle.projectsEvaluated {
+    subprojects { project ->
+        def patchBuildNinja = { cxxDir ->
+            if (cxxDir.exists()) {
+                cxxDir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+                    if (file.name == "build.ninja") {
+                        def content = file.text
+                        def newContent = content
+                        if (content.contains("LINK_LIBRARIES") && content.contains("-latomic") && !content.contains("-lc++")) {
+                            newContent = newContent.replaceAll(/(\s+)(-latomic)/, '$1 -lc++ $2')
+                            if (newContent != content) {
+                                file.text = newContent
+                                println "✅ [${project.name}] Patched build.ninja to link libc++: ${file.path}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        project.tasks.matching { it.name.matches(".*configureCMake.*") }.configureEach { task ->
+            doLast { patchBuildNinja(file("${project.projectDir}/.cxx")) }
+        }
+        project.tasks.matching { it.name.matches(".*buildCMake.*") }.configureEach { task ->
+            doFirst { patchBuildNinja(file("${project.projectDir}/.cxx")) }
+        }
+    }
+}
