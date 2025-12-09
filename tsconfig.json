@@ -25,6 +25,6 @@
       "@types/*": ["src/types/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts", "src/**/*", "nativewind-env.d.ts"],
+  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts", "src/**/*", "nativewind-env.d.ts", "svg.d.ts"],
   "exclude": ["**/node_modules", "**/Pods", "**/__tests__", "**/__mocks__"]
 }

@@ -18,12 +18,13 @@ export const colors = {
     tertiary: '#999999',
     white: '#FFFFFF',
     black: '#000000',
+    title: '#1F1F1F', // Title color
   },
 
   // Button colors
   button: {
-    primary: '#050505',
-    primaryDisabled: '#000000', // 60% opacity applied in component
+    primary: '#A855F7', // Purple - active color
+    primaryDisabled: '#A855F7', // Purple with 60% opacity applied in component
     secondary: '#666666',
     disabled: '#000000',
   },
@@ -41,6 +42,12 @@ export const colors = {
     light: '#E5E5E5',
     medium: '#CCCCCC',
     dark: '#999999',
+    divider: '#2F2F2F', // Divider color
+  },
+  
+  // Divider text color
+  divider: {
+    text: '#2F2F2F',
   },
 } as const;
 

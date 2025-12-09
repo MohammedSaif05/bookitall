@@ -52,8 +52,9 @@ export const typography = {
   },
   h1: {
     fontFamily: fonts.manrope.bold,
-    fontSize: 28,
-    lineHeight: 36,
+    fontSize: 32,
+    lineHeight: 40,
+    letterSpacing: -0.96, // -3% of 32px
   },
   h2: {
     fontFamily: fonts.manrope.semiBold,
@@ -86,6 +87,12 @@ export const typography = {
     fontSize: 12,
     lineHeight: 18,
   },
+  dividerCaption: {
+    fontFamily: fonts.manrope.bold,
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.24, // 2% of 12px
+  },
   button: {
     fontFamily: fonts.manrope.semiBold,
     fontSize: 16,
@@ -95,6 +102,17 @@ export const typography = {
     fontFamily: fonts.manrope.medium,
     fontSize: 14,
     lineHeight: 20,
+  },
+  phoneInput: {
+    fontFamily: fonts.manrope.medium,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  terms: {
+    fontFamily: fonts.manrope.regular,
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.24, // 2% of 12px
   },
 } as const;
 

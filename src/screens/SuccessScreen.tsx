@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/colors';
 
 const SuccessScreen = () => {
   return (
@@ -15,7 +16,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.background.primary,
   },
   title: {
     fontSize: 24,
