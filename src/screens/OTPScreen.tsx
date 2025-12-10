@@ -58,7 +58,7 @@ const OTPScreen = ({ navigation }: Props) => {
       // Simulate API call
       setTimeout(() => {
         setIsLoading(false);
-        navigation.navigate('SuccessScreen');
+        navigation.navigate('NameScreen');
       }, 1000);
     }
   };
