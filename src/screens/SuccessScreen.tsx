@@ -1,11 +1,28 @@
 import { StyleSheet, Text, View } from 'react-native';
+import LottieView from 'lottie-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
+import { Button } from '../components/auth';
+
+const SuccessAnimation = require('../assets/lottie/Success.json');
 
 const SuccessScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>All Set!</Text>
-      <Text style={styles.subtitle}>You are on the new architecture flow.</Text>
+      <View style={styles.content}>
+        <LottieView
+          source={SuccessAnimation}
+          autoPlay
+          loop={false}
+          style={styles.animation}
+        />
+        <Text style={styles.title}>Your account is all set !</Text>
+        <Text style={styles.subtitle}>Everything is ready-start exploring now</Text>
+      </View>
+
+      <SafeAreaView edges={['bottom']} style={styles.buttonWrapper}>
+        <Button title="Continue to explore" onPress={() => {}} />
+      </SafeAreaView>
     </View>
   );
 };
@@ -18,15 +35,30 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: colors.background.primary,
   },
+  animation: {
+    width: 340,
+    height: 340,
+    marginBottom: 0,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
     color: '#555',
     textAlign: 'center',
+    marginBottom: 32,
+  },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonWrapper: {
+    width: '100%',
+    paddingHorizontal: 24,
   },
 });
 
