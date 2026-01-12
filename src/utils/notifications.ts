@@ -1,29 +1,25 @@
 /**
  * Notification Permission Utility
  * Handles notification permissions for both Android and iOS
+ * Uses native system permission dialogs
  */
 
-import { Platform, PermissionsAndroid, Alert } from 'react-native';
+import { Platform, PermissionsAndroid } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 
 export type NotificationPermissionStatus = 'granted' | 'denied' | 'blocked' | 'unavailable';
 
 /**
  * Request notification permission for Android
+ * Shows native Android permission dialog
  */
 const requestAndroidPermission = async (): Promise<boolean> => {
   try {
     // Android 13+ (API level 33+) uses POST_NOTIFICATIONS permission
-    if (Platform.Version >= 33) {
+    const version = typeof Platform.Version === 'number' ? Platform.Version : parseInt(Platform.Version, 10);
+    if (version >= 33) {
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-        {
-          title: 'Notification Permission',
-          message: 'We need permission to send you notifications',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
       );
       return granted === PermissionsAndroid.RESULTS.GRANTED;
     }
@@ -37,6 +33,7 @@ const requestAndroidPermission = async (): Promise<boolean> => {
 
 /**
  * Request notification permission for iOS
+ * Shows native iOS permission dialog
  */
 const requestIOSPermission = async (): Promise<boolean> => {
   try {
@@ -58,7 +55,8 @@ const requestIOSPermission = async (): Promise<boolean> => {
 export const checkNotificationPermission = async (): Promise<NotificationPermissionStatus> => {
   try {
     if (Platform.OS === 'android') {
-      if (Platform.Version >= 33) {
+      const version = typeof Platform.Version === 'number' ? Platform.Version : parseInt(Platform.Version, 10);
+      if (version >= 33) {
         const hasPermission = await PermissionsAndroid.check(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
         );
@@ -85,7 +83,7 @@ export const checkNotificationPermission = async (): Promise<NotificationPermiss
 
 /**
  * Request notification permission
- * Shows appropriate prompt based on platform
+ * Shows native system permission dialog directly
  */
 export const requestNotificationPermission = async (): Promise<boolean> => {
   try {
@@ -98,31 +96,5 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     console.error('Error requesting notification permission:', error);
     return false;
   }
-};
-
-/**
- * Show permission prompt alert
- */
-export const showPermissionAlert = (
-  onAllow: () => void,
-  onDeny?: () => void
-): void => {
-  Alert.alert(
-    'Enable Notifications',
-    'We would like to send you notifications to keep you updated. Please enable notifications in your settings.',
-    [
-      {
-        text: 'Not Now',
-        style: 'cancel',
-        onPress: onDeny,
-      },
-      {
-        text: 'Allow',
-        onPress: onAllow,
-        style: 'default',
-      },
-    ],
-    { cancelable: true }
-  );
 };
 

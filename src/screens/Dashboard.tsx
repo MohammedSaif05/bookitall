@@ -12,7 +12,6 @@ import { useUserStore } from '../store/userStore';
 import {
   checkNotificationPermission,
   requestNotificationPermission,
-  showPermissionAlert,
 } from '../utils/notifications';
 import { getDeviceInfo } from '../utils/deviceInfo';
 import { authApi } from '../api';
@@ -41,25 +40,16 @@ const Dashboard = () => {
         // Permission already granted, register device
         await registerDeviceForNotifications();
       } else if (permissionStatus === 'denied') {
-        // Permission not granted, show prompt
-        showPermissionAlert(
-          async () => {
-            // User clicked "Allow"
-            const granted = await requestNotificationPermission();
-            if (granted) {
-              await registerDeviceForNotifications();
-            } else {
-              showErrorToast({
-                message: 'Permission Denied',
-                description: 'Notification permission was denied. You can enable it later in settings.',
-              });
-            }
-          },
-          () => {
-            // User clicked "Not Now"
-            console.log('User declined notification permission');
-          }
-        );
+        // Permission not granted, directly request native permission
+        const granted = await requestNotificationPermission();
+        if (granted) {
+          await registerDeviceForNotifications();
+        } else {
+          showErrorToast({
+            message: 'Permission Denied',
+            description: 'Notification permission was denied. You can enable it later in settings.',
+          });
+        }
       } else if (permissionStatus === 'blocked') {
         // Permission is blocked, show message
         showErrorToast({

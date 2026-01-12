@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1047916891472",
+    "project_id": "bookitall-9e3ba",
+    "storage_bucket": "bookitall-9e3ba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047916891472:android:344f4df2b22cb1581a3055",
+        "android_client_info": {
+          "package_name": "com.bookitall"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXtjXjo8o-t_OJhSDaJFblLIc0nr22xMc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -48,10 +48,16 @@ export const getAppVersion = (): string => {
 
 /**
  * Get FCM token
+ * Note: Deprecation warning is expected - React Native Firebase is preparing for v22 modular API migration
+ * The current API (messaging().getToken()) is correct and functional
+ * This will be updated when React Native Firebase releases stable modular API
  */
 export const getFCMToken = async (): Promise<string | null> => {
   try {
-    const token = await messaging().getToken();
+    // Get default messaging instance (uses default Firebase app automatically)
+    const messagingInstance = messaging();
+    // Get FCM token - this is the correct current API
+    const token = await messagingInstance.getToken();
     return token;
   } catch (error) {
     console.error('Error getting FCM token:', error);
