@@ -65,5 +65,9 @@
 	<string>Location is required for accurate business tracking and services.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs background location access to improve accuracy.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

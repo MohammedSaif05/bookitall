@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Image, Text, ScrollView, StatusBar, Keyboard, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { showSuccessToast, showErrorToast, showWarningToast } from '../../utils/toast';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation/types';
-import { typography } from '../theme/fonts';
-import { colors } from '../theme/colors';
-import { Button } from '../components/auth';
-import OTPInput from '../components/auth/OTPInput';
+import type { RootStackParamList } from '../../navigation/types';
+import { typography } from '../../theme/fonts';
+import { colors } from '../../theme/colors';
+import { Button } from '../../components/auth';
+import OTPInput from '../../components/auth/OTPInput';
+import { authApi } from '../../api';
+import { useUserStore } from '../../store/userStore';
 
-const HeaderLogo = require('../assets/webp/header_logo.webp');
+const HeaderLogo = require('../../assets/webp/header_logo.webp');
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OTPScreen'>;
 
-const OTPScreen = ({ navigation }: Props) => {
+const OTPScreen = ({ navigation, route }: Props) => {
+  const { phoneNumber } = route.params;
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(45); // 45 seconds timer
   const [isLoading, setIsLoading] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const setUserId = useUserStore((state) => state.setUserId);
 
   useEffect(() => {
     // Timer countdown
@@ -52,14 +57,55 @@ const OTPScreen = ({ navigation }: Props) => {
     setOtp(otpValue);
   };
 
-  const handleVerify = () => {
-    if (otp.length === 6) {
-      setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
+  const handleVerify = async () => {
+    if (otp.length !== 6) {
+      showWarningToast({
+        message: 'Invalid OTP',
+        description: 'Please enter a valid 6-digit OTP',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Step 1: Verify OTP
+      const verifyResponse = await authApi.verifyOTP(phoneNumber, otp, 'customer');
+      
+      // Store userId in store and AsyncStorage
+      if (verifyResponse.userId) {
+        await setUserId(verifyResponse.userId);
+      }
+
+      showSuccessToast({
+        message: 'OTP Verified',
+        description: verifyResponse.message || 'Phone number verified successfully',
+      });
+
+      // Step 2: Get customer details immediately after verification
+      try {
+        const customerDetails = await authApi.getCustomerDetails(verifyResponse.userId);
+        
+        // Check if customerName exists
+        if (customerDetails.customerName && customerDetails.customerName.trim().length > 0) {
+          // Customer name exists, navigate to Dashboard
+          navigation.navigate('Dashboard');
+        } else {
+          // Customer name doesn't exist, navigate to NameScreen
+          navigation.navigate('NameScreen');
+        }
+      } catch (detailsError: any) {
+        // If get-details fails, still navigate to NameScreen as fallback
+        console.error('Error fetching customer details:', detailsError);
         navigation.navigate('NameScreen');
-      }, 1000);
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Invalid OTP. Please try again.';
+      showErrorToast({
+        message: 'Verification Failed',
+        description: errorMessage,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 

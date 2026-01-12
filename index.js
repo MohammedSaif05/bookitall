@@ -6,6 +6,7 @@ import 'react-native-gesture-handler';
 import './global.css';
 import { AppRegistry } from 'react-native';
 import RNBootSplash from 'react-native-bootsplash';
+import '@react-native-firebase/app';
 import App from './App';
 import { name as appName } from './app.json';
 

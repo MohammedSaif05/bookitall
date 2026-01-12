@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Image, Text, ScrollView, StatusBar, TextInput, Keyboard, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation/types';
-import { typography, fonts } from '../theme/fonts';
-import { colors } from '../theme/colors';
-import { Button } from '../components/auth';
+import type { RootStackParamList } from '../../navigation/types';
+import { typography, fonts } from '../../theme/fonts';
+import { colors } from '../../theme/colors';
+import { Button } from '../../components/auth';
+import { authApi } from '../../api';
+import { useUserStore } from '../../store/userStore';
+import { showSuccessToast, showErrorToast, showWarningToast } from '../../utils/toast';
 
-const HeaderLogo = require('../assets/webp/header_logo.webp');
+const HeaderLogo = require('../../assets/webp/header_logo.webp');
 
 type Props = NativeStackScreenProps<RootStackParamList, 'NameScreen'>;
 
@@ -15,6 +18,7 @@ const NameScreen = ({ navigation }: Props) => {
   const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const userId = useUserStore((state) => state.userId);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -31,16 +35,42 @@ const NameScreen = ({ navigation }: Props) => {
 
   const isNameValid = name.trim().length > 0;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!isNameValid) {
+      showWarningToast({
+        message: 'Invalid Name',
+        description: 'Please enter your full name',
+      });
       return;
     }
+
+    if (!userId) {
+      showErrorToast({
+        message: 'Error',
+        description: 'User ID not found. Please try again.',
+      });
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await authApi.updateCustomerDetails(userId, name.trim());
+      
+      showSuccessToast({
+        message: 'Success',
+        description: response.message || 'Your name has been updated successfully',
+      });
+
       navigation.navigate('SuccessScreen');
-    }, 1000);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to update name. Please try again.';
+      showErrorToast({
+        message: 'Error',
+        description: errorMessage,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

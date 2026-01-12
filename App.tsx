@@ -6,11 +6,13 @@ import RNBootSplash from 'react-native-bootsplash';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import SplashScreen from './src/components/SplashScreen';
 import { RootNavigator } from './src/navigation';
+import { useUserStore } from './src/store/userStore';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const [isSplashVisible, setIsSplashVisible] = useState(true);
-  const [shouldNavigateToSuccess] = useState(false);
+  const [initialRoute, setInitialRoute] = useState<'Dashboard' | 'GettingStarted'>('GettingStarted');
+  const initialize = useUserStore((state) => state.initialize);
 
   useLayoutEffect(() => {
     // Hide native splash screen immediately so custom splash can take over
@@ -20,14 +22,19 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Placeholder for future async initialization logic
-    // const checkOnboardingStatus = async () => {
-    //   const userId = await userStorage.getUserId();
-    //   const isOnBoardCompleted = await userStorage.getIsOnBoardCompleted();
-    //   if (userId && isOnBoardCompleted) setShouldNavigateToSuccess(true);
-    // };
-    // checkOnboardingStatus();
-  }, []);
+    // Initialize store and check userId
+    const checkAuthStatus = async () => {
+      await initialize();
+      // Check if userId exists after initialization
+      const currentUserId = useUserStore.getState().userId;
+      if (currentUserId) {
+        setInitialRoute('Dashboard');
+      } else {
+        setInitialRoute('GettingStarted');
+      }
+    };
+    checkAuthStatus();
+  }, [initialize]);
 
   return (
     <ErrorBoundary onError={(error, info) => console.error('App Error:', error, info)}>
@@ -37,15 +44,21 @@ function App() {
           <SplashScreen onAnimationComplete={() => setIsSplashVisible(false)} />
         )}
         {!isSplashVisible && (
-          <AppContent shouldNavigateToSuccess={shouldNavigateToSuccess} />
+          <AppContent initialRoute={initialRoute} />
         )}
-        <FlashMessage position="bottom" />
+        <FlashMessage 
+          position="bottom" 
+          floating={true}
+          style={{
+            borderRadius: 12,
+          }}
+        />
       </SafeAreaProvider>
     </ErrorBoundary>
   );
 }
 
-function AppContent({ shouldNavigateToSuccess }: { shouldNavigateToSuccess: boolean }) {
+function AppContent({ initialRoute }: { initialRoute: 'Dashboard' | 'GettingStarted' }) {
   const navigationRef = useRef(null);
   return (
     <RootNavigator
@@ -53,7 +66,7 @@ function AppContent({ shouldNavigateToSuccess }: { shouldNavigateToSuccess: bool
       onReady={() => {
         console.log('Navigation ready');
       }}
-      initialAuthRoute={shouldNavigateToSuccess ? 'SuccessScreen' : 'GettingStarted'}
+      initialAuthRoute={initialRoute}
     />
   );
 }

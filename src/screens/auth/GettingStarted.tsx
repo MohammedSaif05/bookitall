@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Image, Text, ScrollView, StatusBar, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { showSuccessToast, showErrorToast, showWarningToast } from '../../utils/toast';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../navigation/types';
-import { typography, fonts } from '../theme/fonts';
-import { colors, getColorWithOpacity } from '../theme/colors';
-import { Button, PhoneNumberInput } from '../components/auth';
+import type { RootStackParamList } from '../../navigation/types';
+import { typography, fonts } from '../../theme/fonts';
+import { colors, getColorWithOpacity } from '../../theme/colors';
+import { Button, PhoneNumberInput } from '../../components/auth';
+import { authApi } from '../../api';
+import { useUserStore } from '../../store/userStore';
 
-const AuthBanner = require('../assets/webp/Auth_banner.webp');
+const AuthBanner = require('../../assets/webp/Auth_banner.webp');
 
 type Props = NativeStackScreenProps<RootStackParamList, 'GettingStarted'>;
 
@@ -15,6 +18,7 @@ const GettingStarted = ({ navigation }: Props) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const setPhoneNumberInStore = useUserStore((state) => state.setPhoneNumber);
 
   // Check if phone number has exactly 10 digits
   const isPhoneValid = phoneNumber.length === 10;
@@ -34,18 +38,40 @@ const GettingStarted = ({ navigation }: Props) => {
     };
   }, []);
 
-  const handleContinue = () => {
-    // Add your validation logic here
+  const handleContinue = async () => {
     if (!isPhoneValid) {
-      // Handle error
+      showWarningToast({
+        message: 'Invalid Phone Number',
+        description: 'Please enter a valid 10-digit phone number',
+      });
       return;
     }
+
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await authApi.sendOTP(phoneNumber);
+      
+      // Store phone number in store
+      await setPhoneNumberInStore(phoneNumber);
+
+      showSuccessToast({
+        message: 'OTP Sent',
+        description: response.message || 'OTP has been sent to your phone number',
+      });
+
+      // Navigate to OTP screen with phone number
+      navigation.navigate('OTPScreen', {
+        phoneNumber,
+      });
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to send OTP. Please try again.';
+      showErrorToast({
+        message: 'Error',
+        description: errorMessage,
+      });
+    } finally {
       setIsLoading(false);
-      navigation.navigate('OTPScreen');
-    }, 1000);
+    }
   };
 
   return (

@@ -1,10 +1,11 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { enableScreens } from 'react-native-screens';
-import GettingStarted from '../screens/GettingStarted';
-import OTPScreen from '../screens/OTPScreen';
-import SuccessScreen from '../screens/SuccessScreen';
-import NameScreen from '../screens/NameScreen';
+import GettingStarted from '../screens/auth/GettingStarted';
+import OTPScreen from '../screens/auth/OTPScreen';
+import SuccessScreen from '../screens/auth/SuccessScreen';
+import NameScreen from '../screens/auth/NameScreen';
+import Dashboard from '../screens/Dashboard';
 import type { RootStackParamList } from './types';
 import { forwardRef } from 'react';
 
@@ -25,6 +26,7 @@ export const RootNavigator = forwardRef<any, Props>(
         <Stack.Screen name="OTPScreen" component={OTPScreen} />
         <Stack.Screen name="SuccessScreen" component={SuccessScreen} />
         <Stack.Screen name="NameScreen" component={NameScreen} />
+        <Stack.Screen name="Dashboard" component={Dashboard} />
       </Stack.Navigator>
     </NavigationContainer>
   ),

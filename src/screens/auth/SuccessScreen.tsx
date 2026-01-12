@@ -1,12 +1,20 @@
 import { StyleSheet, Text, View } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
-import { Button } from '../components/auth';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../../navigation/types';
+import { colors } from '../../theme/colors';
+import { Button } from '../../components/auth';
 
-const SuccessAnimation = require('../assets/lottie/Success.json');
+const SuccessAnimation = require('../../assets/lottie/Success.json');
 
-const SuccessScreen = () => {
+type Props = NativeStackScreenProps<RootStackParamList, 'SuccessScreen'>;
+
+const SuccessScreen = ({ navigation }: Props) => {
+  const handleContinue = () => {
+    navigation.navigate('Dashboard');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -21,7 +29,7 @@ const SuccessScreen = () => {
       </View>
 
       <SafeAreaView edges={['bottom']} style={styles.buttonWrapper}>
-        <Button title="Continue to explore" onPress={() => {}} />
+        <Button title="Continue to explore" onPress={handleContinue} />
       </SafeAreaView>
     </View>
   );

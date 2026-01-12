@@ -1,7 +1,10 @@
 export type RootStackParamList = {
   GettingStarted: undefined;
-  OTPScreen: undefined;
+  OTPScreen: {
+    phoneNumber: string;
+  };
   SuccessScreen: undefined;
   NameScreen: undefined;
+  Dashboard: undefined;
 };
 
