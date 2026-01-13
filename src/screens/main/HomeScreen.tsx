@@ -251,7 +251,7 @@ const HomeScreen = () => {
 
       {/* Search Bar */}
       <View style={styles.searchBarContainer}>
-        <SearchBar placeholder="Search for services" />
+        <SearchBar />
       </View>
 
       {/* Location Picker Modal */}
