@@ -26,7 +26,9 @@ const HomeScreen = () => {
   const userId = useUserStore((state) => state.userId);
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(true);
   const [customerName, setCustomerName] = useState<string>('');
-  const [cityName, setCityName] = useState<string>('Hosur'); // Default city
+  const [isLoadingCustomerName, setIsLoadingCustomerName] = useState(true);
+  const [cityName, setCityName] = useState<string>('');
+  const [isLoadingCity, setIsLoadingCity] = useState<boolean>(true);
 
   useEffect(() => {
     checkAndRegisterNotifications();
@@ -37,6 +39,7 @@ const HomeScreen = () => {
 
   const fetchCustomerDetails = async () => {
     if (!userId) {
+      setIsLoadingCustomerName(false);
       return;
     }
 
@@ -47,6 +50,8 @@ const HomeScreen = () => {
       }
     } catch (error) {
       console.error('Error fetching customer details:', error);
+    } finally {
+      setIsLoadingCustomerName(false);
     }
   };
 
@@ -61,15 +66,25 @@ const HomeScreen = () => {
         if (granted) {
           await getLocationAndUpdateCity();
         } else {
-          // Permission denied, keep default city
+          // Permission denied, use default city
+          setCityName('Hosur');
+          setIsLoadingCity(false);
           console.log('Location permission denied, using default city');
         }
       } else if (permissionStatus === 'blocked') {
-        // Location is blocked, keep default city
+        // Location is blocked, use default city
+        setCityName('Hosur');
+        setIsLoadingCity(false);
         console.log('Location permission blocked, using default city');
+      } else {
+        // Unavailable or other status, use default city
+        setCityName('Hosur');
+        setIsLoadingCity(false);
       }
     } catch (error) {
       console.error('Error checking location permissions:', error);
+      setCityName('Hosur');
+      setIsLoadingCity(false);
     }
   };
 
@@ -78,10 +93,16 @@ const HomeScreen = () => {
       const locationInfo = await getCurrentLocation();
       if (locationInfo && locationInfo.city) {
         setCityName(locationInfo.city);
+      } else {
+        // Fallback to default city if location info is not available
+        setCityName('Hosur');
       }
     } catch (error) {
       console.error('Error getting location:', error);
-      // Keep default city on error
+      // Use default city on error
+      setCityName('Hosur');
+    } finally {
+      setIsLoadingCity(false);
     }
   };
 
@@ -176,13 +197,15 @@ const HomeScreen = () => {
         {/* Left side - Greeting and Location */}
         <View style={styles.headerLeft}>
           <Text style={styles.greetingText}>
-            Hi, {customerName || 'User'}
+            Hi, {isLoadingCustomerName ? 'Loading...' : customerName || 'User'}
           </Text>
           <TouchableOpacity style={styles.locationContainer} activeOpacity={0.7}>
             <View style={styles.locationIconWrapper}>
               <LocationIcon width={ms(16)} height={ms(16)} />
             </View>
-            <Text style={styles.locationText}>{cityName}</Text>
+            <Text style={styles.locationText}>
+              {isLoadingCity ? 'Loading...' : cityName || 'Hosur'}
+            </Text>
             <View style={styles.dropdownIconWrapper}>
               <DropDownIcon width={ms(12)} height={ms(12)} />
             </View>

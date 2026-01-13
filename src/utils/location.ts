@@ -133,7 +133,7 @@ export const checkLocationPermission = async (): Promise<LocationPermissionStatu
             {
               enableHighAccuracy: false,
               timeout: 100,
-              maximumAge: 0,
+              maximumAge: 300000, // Use cached location for faster check
             }
           );
         });
@@ -166,9 +166,12 @@ export const requestLocationPermission = async (): Promise<boolean> => {
 
 /**
  * Get current GPS coordinates
+ * Optimized for speed: Uses cached location first, then network-based location
+ * For city name, network location is sufficient and much faster than GPS
  */
 export const getCurrentPosition = (): Promise<Coordinates> => {
   return new Promise((resolve, reject) => {
+    // First attempt: Fast network-based location with cached data (instant if available)
     Geolocation.getCurrentPosition(
       (position) => {
         resolve({
@@ -177,13 +180,36 @@ export const getCurrentPosition = (): Promise<Coordinates> => {
         });
       },
       (error) => {
-        console.error('Error getting current position:', error);
-        reject(error);
+        // If network location fails, try with GPS (slower but more accurate)
+        // Error codes: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
+        if (error.code === 3 || error.code === 2) {
+          console.log('Network location unavailable, trying GPS...');
+          Geolocation.getCurrentPosition(
+            (position) => {
+              resolve({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              });
+            },
+            (gpsError) => {
+              console.error('Error getting GPS position:', gpsError);
+              reject(gpsError);
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 8000, // 8 seconds max for GPS
+              maximumAge: 0,
+            }
+          );
+        } else {
+          console.error('Error getting current position:', error);
+          reject(error);
+        }
       },
       {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 10000,
+        enableHighAccuracy: false, // Network-based (faster)
+        timeout: 5000, // 5 seconds max - fast timeout
+        maximumAge: 300000, // Accept cached location up to 5 minutes old (instant if available)
       }
     );
   });
@@ -237,20 +263,42 @@ export const getCurrentLocation = async (): Promise<LocationInfo | null> => {
     const permissionStatus = await checkLocationPermission();
 
     if (permissionStatus === 'granted') {
-      // Get coordinates
-      const coordinates = await getCurrentPosition();
-      // Reverse geocode to get city name
-      const locationInfo = await reverseGeocode(coordinates);
-      return locationInfo;
-    } else if (permissionStatus === 'denied') {
-      // Request permission
-      const granted = await requestLocationPermission();
-      if (granted) {
+      try {
         // Get coordinates
         const coordinates = await getCurrentPosition();
         // Reverse geocode to get city name
         const locationInfo = await reverseGeocode(coordinates);
         return locationInfo;
+      } catch (error: any) {
+        // Handle timeout or other location errors gracefully
+        if (error.code === 3) {
+          console.log('Location request timed out, using default city');
+        } else if (error.code === 1) {
+          console.log('Location permission denied');
+        } else {
+          console.error('Error getting location:', error);
+        }
+        return null;
+      }
+    } else if (permissionStatus === 'denied') {
+      // Request permission
+      const granted = await requestLocationPermission();
+      if (granted) {
+        try {
+          // Get coordinates
+          const coordinates = await getCurrentPosition();
+          // Reverse geocode to get city name
+          const locationInfo = await reverseGeocode(coordinates);
+          return locationInfo;
+        } catch (error: any) {
+          // Handle timeout or other location errors gracefully
+          if (error.code === 3) {
+            console.log('Location request timed out after permission granted');
+          } else {
+            console.error('Error getting location:', error);
+          }
+          return null;
+        }
       }
     }
 
