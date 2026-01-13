@@ -6,12 +6,18 @@
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
         <!-- Set initial window background to black to avoid white flash -->
         <item name="android:windowBackground">@android:color/black</item>
+        <!-- Transparent navigation bar for gesture navigation (Android 9 and below) -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
     <!-- Boot splash theme placeholder; point to your bootsplash drawable if available -->
     <style name="BootTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Bootsplash drawable (black background) -->
         <item name="android:windowBackground">@drawable/bootsplash</item>
+        <!-- Transparent navigation bar for gesture navigation -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
 </resources>
