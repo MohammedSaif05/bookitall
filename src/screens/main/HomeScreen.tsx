@@ -1,26 +1,89 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../../theme/colors';
-import { typography } from '../../theme/fonts';
+import { typography, fonts } from '../../theme/fonts';
+import { ms, hs, vs } from '../../theme/scaling';
 import { useUserStore } from '../../store/userStore';
 import {
   checkNotificationPermission,
   requestNotificationPermission,
 } from '../../utils/notifications';
+import {
+  checkLocationPermission,
+  requestLocationPermission,
+  getCurrentLocation,
+} from '../../utils/location';
 import { getDeviceInfo } from '../../utils/deviceInfo';
 import { authApi } from '../../api';
 import { showSuccessToast, showErrorToast } from '../../utils/toast';
+import LocationIcon from '../../assets/icons/svg/location.svg';
+import NotificationIcon from '../../assets/icons/svg/notification.svg';
+import DropDownIcon from '../../assets/icons/svg/drop_down.svg';
 
 const HomeScreen = () => {
   const userId = useUserStore((state) => state.userId);
   const [isCheckingPermissions, setIsCheckingPermissions] = useState(true);
+  const [customerName, setCustomerName] = useState<string>('');
+  const [cityName, setCityName] = useState<string>('Hosur'); // Default city
 
   useEffect(() => {
     checkAndRegisterNotifications();
+    fetchCustomerDetails();
+    checkAndGetLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  const fetchCustomerDetails = async () => {
+    if (!userId) {
+      return;
+    }
+
+    try {
+      const details = await authApi.getCustomerDetails(userId);
+      if (details.customerName) {
+        setCustomerName(details.customerName);
+      }
+    } catch (error) {
+      console.error('Error fetching customer details:', error);
+    }
+  };
+
+  const checkAndGetLocation = async () => {
+    try {
+      const permissionStatus = await checkLocationPermission();
+
+      if (permissionStatus === 'granted') {
+        await getLocationAndUpdateCity();
+      } else if (permissionStatus === 'denied') {
+        const granted = await requestLocationPermission();
+        if (granted) {
+          await getLocationAndUpdateCity();
+        } else {
+          // Permission denied, keep default city
+          console.log('Location permission denied, using default city');
+        }
+      } else if (permissionStatus === 'blocked') {
+        // Location is blocked, keep default city
+        console.log('Location permission blocked, using default city');
+      }
+    } catch (error) {
+      console.error('Error checking location permissions:', error);
+    }
+  };
+
+  const getLocationAndUpdateCity = async () => {
+    try {
+      const locationInfo = await getCurrentLocation();
+      if (locationInfo && locationInfo.city) {
+        setCityName(locationInfo.city);
+      }
+    } catch (error) {
+      console.error('Error getting location:', error);
+      // Keep default city on error
+    }
+  };
 
   const checkAndRegisterNotifications = async () => {
     if (!userId) {
@@ -108,6 +171,33 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* Header */}
+      <View style={styles.header}>
+        {/* Left side - Greeting and Location */}
+        <View style={styles.headerLeft}>
+          <Text style={styles.greetingText}>
+            Hi, {customerName || 'User'}
+          </Text>
+          <TouchableOpacity style={styles.locationContainer} activeOpacity={0.7}>
+            <View style={styles.locationIconWrapper}>
+              <LocationIcon width={ms(16)} height={ms(16)} />
+            </View>
+            <Text style={styles.locationText}>{cityName}</Text>
+            <View style={styles.dropdownIconWrapper}>
+              <DropDownIcon width={ms(12)} height={ms(12)} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Right side - Notification Icon */}
+        <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
+          <View style={styles.notificationIconContainer}>
+            <NotificationIcon width={ms(20)} height={ms(20)} />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Content */}
       <View style={styles.content}>
         <Text style={styles.title}>Home</Text>
         <Text style={styles.subtitle}>
@@ -123,18 +213,67 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.primary,
+    backgroundColor: colors.background.white,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    backgroundColor: colors.background.white,
+    paddingHorizontal: hs(20),
+    paddingTop: vs(16),
+    paddingBottom: vs(16),
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  greetingText: {
+    fontFamily: fonts.manrope.bold,
+    fontSize: ms(24),
+    lineHeight: ms(32),
+    color: colors.text.title,
+    marginBottom: vs(2),
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationIconWrapper: {
+    marginRight: hs(6),
+  },
+  locationText: {
+    fontFamily: fonts.manrope.regular,
+    fontSize: ms(14),
+    lineHeight: ms(20),
+    color: colors.text.title,
+    marginRight: hs(4),
+  },
+  dropdownIconWrapper: {
+    marginLeft: hs(2),
+  },
+  notificationButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationIconContainer: {
+    width: ms(40),
+    height: ms(40),
+    borderRadius: ms(20),
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: hs(24),
+    backgroundColor: colors.background.white,
   },
   title: {
     ...typography.h1,
     color: colors.text.black,
-    marginBottom: 16,
+    marginBottom: vs(16),
   },
   subtitle: {
     ...typography.body,

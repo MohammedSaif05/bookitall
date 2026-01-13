@@ -17,6 +17,7 @@ import ProfileActiveIcon from '../../assets/icons/svg/profile_active.svg';
 import ProfileInactiveIcon from '../../assets/icons/svg/profile_inactive.svg';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
+import { ms, hs, vs } from '../../theme/scaling';
 
 type DashboardTabParamList = {
   Home: undefined;
@@ -56,7 +57,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
     };
 
     const icon = options.tabBarIcon
-      ? options.tabBarIcon({ focused: isFocused, color: '', size: 24 })
+      ? options.tabBarIcon({ focused: isFocused, color: '', size: ms(24) })
       : null;
 
     return (
@@ -121,7 +122,11 @@ const DashboardTabs = () => {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused }) =>
-            focused ? <HomeActiveIcon width={24} height={24} /> : <HomeInactiveIcon width={24} height={24} />,
+            focused ? (
+              <HomeActiveIcon width={ms(24)} height={ms(24)} />
+            ) : (
+              <HomeInactiveIcon width={ms(24)} height={ms(24)} />
+            ),
         }}
       />
       <Tab.Screen
@@ -131,9 +136,9 @@ const DashboardTabs = () => {
           tabBarLabel: 'Bookings',
           tabBarIcon: ({ focused }) =>
             focused ? (
-              <BookingsActiveIcon width={24} height={24} />
+              <BookingsActiveIcon width={ms(24)} height={ms(24)} />
             ) : (
-              <BookingsInactiveIcon width={24} height={24} />
+              <BookingsInactiveIcon width={ms(24)} height={ms(24)} />
             ),
         }}
       />
@@ -144,9 +149,9 @@ const DashboardTabs = () => {
           tabBarLabel: 'Favorites',
           tabBarIcon: ({ focused }) =>
             focused ? (
-              <FavoritesActiveIcon width={24} height={24} />
+              <FavoritesActiveIcon width={ms(24)} height={ms(24)} />
             ) : (
-              <FavoritesInactiveIcon width={24} height={24} />
+              <FavoritesInactiveIcon width={ms(24)} height={ms(24)} />
             ),
         }}
       />
@@ -156,7 +161,11 @@ const DashboardTabs = () => {
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ focused }) =>
-            focused ? <ProfileActiveIcon width={24} height={24} /> : <ProfileInactiveIcon width={24} height={24} />,
+            focused ? (
+              <ProfileActiveIcon width={ms(24)} height={ms(24)} />
+            ) : (
+              <ProfileInactiveIcon width={ms(24)} height={ms(24)} />
+            ),
         }}
       />
     </Tab.Navigator>
@@ -170,16 +179,16 @@ const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
     backgroundColor: colors.background.white,
-    paddingBottom: 8,
-    paddingTop: 12,
-    paddingHorizontal: 20,
+    paddingBottom: vs(8),
+    paddingTop: vs(12),
+    paddingHorizontal: hs(20),
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 0,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: { width: 0, height: ms(-2) },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: ms(8),
     elevation: 10,
   },
   leftTabsContainer: {
@@ -195,20 +204,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   centerButtonSpacer: {
-    width: 64,
-    marginHorizontal: 20,
+    width: ms(64),
+    marginHorizontal: hs(20),
   },
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 60,
+    minWidth: ms(60),
   },
   tabItemWithMargin: {
-    marginRight: 32,
+    marginRight: hs(16),
   },
   tabLabel: {
-    marginTop: 4,
-    fontSize: 12,
+    marginTop: vs(4),
+    fontSize: ms(12),
   },
   tabLabelActive: {
     color: '#1F1F1F',
@@ -220,7 +229,7 @@ const styles = StyleSheet.create({
   },
   centerButtonWrapper: {
     position: 'absolute',
-    bottom: 50,
+    bottom: vs(45),
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -228,24 +237,24 @@ const styles = StyleSheet.create({
     pointerEvents: 'box-none',
   },
   centerButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: ms(64),
+    height: ms(64),
+    borderRadius: ms(32),
     backgroundColor: colors.background.black,
-    borderWidth: 5,
+    borderWidth: ms(5),
     borderColor: colors.text.white,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: ms(4) },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: ms(8),
     elevation: 12,
   },
   centerButtonText: {
     color: colors.text.white,
-    fontSize: 32,
-    lineHeight: 32,
+    fontSize: ms(32),
+    lineHeight: ms(32),
   },
 });
 
