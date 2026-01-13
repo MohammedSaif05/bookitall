@@ -90,3 +90,21 @@ export interface RegisterDeviceResponse {
   deviceId?: string;
 }
 
+/**
+ * Categories API Types
+ */
+export interface Category {
+  _id: string;
+  slug: string;
+  name: string;
+  image: string;
+  order: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetCategoriesResponse {
+  categories: Category[];
+}
+

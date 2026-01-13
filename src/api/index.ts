@@ -9,3 +9,7 @@ export * from './config';
 import * as authApi from './auth';
 export { authApi };
 
+// Export categories API functions
+import * as categoriesApi from './categories';
+export { categoriesApi };
+

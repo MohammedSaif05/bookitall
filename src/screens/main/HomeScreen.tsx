@@ -23,7 +23,7 @@ import { showSuccessToast, showErrorToast } from '../../utils/toast';
 import LocationIcon from '../../assets/icons/svg/location.svg';
 import NotificationIcon from '../../assets/icons/svg/notification.svg';
 import DropDownIcon from '../../assets/icons/svg/drop_down.svg';
-import { SearchBar } from '../../components/common';
+import { SearchBar, CategoriesList } from '../../components/common';
 
 const HomeScreen = () => {
   const userId = useUserStore((state) => state.userId);
@@ -253,6 +253,9 @@ const HomeScreen = () => {
       <View style={styles.searchBarContainer}>
         <SearchBar />
       </View>
+
+      {/* Categories List */}
+      <CategoriesList />
 
       {/* Location Picker Modal */}
       <Modal
