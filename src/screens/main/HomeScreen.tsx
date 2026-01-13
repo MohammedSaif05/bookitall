@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Modal, ScrollView, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../../theme/colors';
@@ -14,6 +14,8 @@ import {
   checkLocationPermission,
   requestLocationPermission,
   getCurrentLocation,
+  getCachedLocations,
+  LocationInfo,
 } from '../../utils/location';
 import { getDeviceInfo } from '../../utils/deviceInfo';
 import { authApi } from '../../api';
@@ -21,6 +23,7 @@ import { showSuccessToast, showErrorToast } from '../../utils/toast';
 import LocationIcon from '../../assets/icons/svg/location.svg';
 import NotificationIcon from '../../assets/icons/svg/notification.svg';
 import DropDownIcon from '../../assets/icons/svg/drop_down.svg';
+import { SearchBar } from '../../components/common';
 
 const HomeScreen = () => {
   const userId = useUserStore((state) => state.userId);
@@ -29,6 +32,8 @@ const HomeScreen = () => {
   const [isLoadingCustomerName, setIsLoadingCustomerName] = useState(true);
   const [cityName, setCityName] = useState<string>('');
   const [isLoadingCity, setIsLoadingCity] = useState<boolean>(true);
+  const [showLocationModal, setShowLocationModal] = useState<boolean>(false);
+  const [cachedLocations, setCachedLocations] = useState<LocationInfo[]>([]);
 
   useEffect(() => {
     checkAndRegisterNotifications();
@@ -104,6 +109,25 @@ const HomeScreen = () => {
     } finally {
       setIsLoadingCity(false);
     }
+  };
+
+  const loadCachedLocations = async () => {
+    try {
+      const cached = await getCachedLocations();
+      setCachedLocations(cached);
+    } catch (error) {
+      console.error('Error loading cached locations:', error);
+    }
+  };
+
+  const handleLocationPress = async () => {
+    await loadCachedLocations();
+    setShowLocationModal(true);
+  };
+
+  const handleLocationSelect = (location: LocationInfo) => {
+    setCityName(location.city);
+    setShowLocationModal(false);
   };
 
   const checkAndRegisterNotifications = async () => {
@@ -191,15 +215,20 @@ const HomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* Header */}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        {/* Header */}
       <View style={styles.header}>
         {/* Left side - Greeting and Location */}
         <View style={styles.headerLeft}>
           <Text style={styles.greetingText}>
             Hi, {isLoadingCustomerName ? 'Loading...' : customerName || 'User'}
           </Text>
-          <TouchableOpacity style={styles.locationContainer} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.locationContainer}
+            activeOpacity={0.7}
+            onPress={handleLocationPress}
+          >
             <View style={styles.locationIconWrapper}>
               <LocationIcon width={ms(16)} height={ms(16)} />
             </View>
@@ -220,6 +249,85 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Search Bar */}
+      <View style={styles.searchBarContainer}>
+        <SearchBar placeholder="Search for services" />
+      </View>
+
+      {/* Location Picker Modal */}
+      <Modal
+        visible={showLocationModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLocationModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLocationModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Location</Text>
+              <TouchableOpacity
+                onPress={() => setShowLocationModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.locationsList}>
+              {cachedLocations.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No cached locations</Text>
+                  <Text style={styles.emptyStateSubtext}>
+                    Your recent locations will appear here
+                  </Text>
+                </View>
+              ) : (
+                cachedLocations.map((location, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.locationItem,
+                      cityName === location.city && styles.locationItemActive,
+                    ]}
+                    onPress={() => handleLocationSelect(location)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.locationItemIcon}>
+                      <LocationIcon width={ms(20)} height={ms(20)} />
+                    </View>
+                    <View style={styles.locationItemText}>
+                      <Text
+                        style={[
+                          styles.locationItemCity,
+                          cityName === location.city && styles.locationItemCityActive,
+                        ]}
+                      >
+                        {location.city}
+                      </Text>
+                      {location.state && (
+                        <Text style={styles.locationItemState}>
+                          {location.state}
+                          {location.country && `, ${location.country}`}
+                        </Text>
+                      )}
+                    </View>
+                    {cityName === location.city && (
+                      <View style={styles.locationItemCheck}>
+                        <Text style={styles.locationItemCheckText}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Content */}
       <View style={styles.content}>
         <Text style={styles.title}>Home</Text>
@@ -229,7 +337,8 @@ const HomeScreen = () => {
             : 'This screen will be built later'}
         </Text>
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -249,6 +358,12 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flex: 1,
+  },
+  searchBarContainer: {
+    paddingHorizontal: hs(20),
+    paddingTop: vs(0),
+    paddingBottom: vs(8),
+    backgroundColor: colors.background.white,
   },
   greetingText: {
     fontFamily: fonts.manrope.bold,
@@ -302,6 +417,109 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.text.secondary,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background.white,
+    borderTopLeftRadius: ms(20),
+    borderTopRightRadius: ms(20),
+    maxHeight: '80%',
+    paddingBottom: vs(20),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: hs(20),
+    paddingTop: vs(20),
+    paddingBottom: vs(16),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  modalTitle: {
+    fontFamily: fonts.manrope.bold,
+    fontSize: ms(18),
+    color: colors.text.title,
+  },
+  modalCloseButton: {
+    width: ms(32),
+    height: ms(32),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseText: {
+    fontSize: ms(24),
+    color: colors.text.secondary,
+    lineHeight: ms(24),
+  },
+  locationsList: {
+    maxHeight: vs(400),
+  },
+  emptyState: {
+    paddingVertical: vs(40),
+    paddingHorizontal: hs(20),
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontFamily: fonts.manrope.medium,
+    fontSize: ms(16),
+    color: colors.text.title,
+    marginBottom: vs(8),
+  },
+  emptyStateSubtext: {
+    fontFamily: fonts.manrope.regular,
+    fontSize: ms(14),
+    color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  locationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: hs(20),
+    paddingVertical: vs(16),
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.light,
+  },
+  locationItemActive: {
+    backgroundColor: '#F8F9FA',
+  },
+  locationItemIcon: {
+    marginRight: hs(12),
+  },
+  locationItemText: {
+    flex: 1,
+  },
+  locationItemCity: {
+    fontFamily: fonts.manrope.medium,
+    fontSize: ms(16),
+    color: colors.text.title,
+    marginBottom: vs(4),
+  },
+  locationItemCityActive: {
+    fontFamily: fonts.manrope.semiBold,
+    color: colors.text.primary,
+  },
+  locationItemState: {
+    fontFamily: fonts.manrope.regular,
+    fontSize: ms(14),
+    color: colors.text.secondary,
+  },
+  locationItemCheck: {
+    width: ms(24),
+    height: ms(24),
+    borderRadius: ms(12),
+    backgroundColor: colors.background.black,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationItemCheckText: {
+    color: colors.text.white,
+    fontSize: ms(14),
+    fontFamily: fonts.manrope.bold,
   },
 });
 

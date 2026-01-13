@@ -6,6 +6,7 @@
 
 import { Platform, PermissionsAndroid } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type LocationPermissionStatus = 'granted' | 'denied' | 'blocked' | 'unavailable';
 
@@ -19,7 +20,11 @@ export interface LocationInfo {
   state?: string;
   country?: string;
   coordinates: Coordinates;
+  timestamp?: number; // For caching
 }
+
+const CACHED_LOCATIONS_KEY = '@bookitall:cached_locations';
+const MAX_CACHED_LOCATIONS = 10; // Keep last 10 locations
 
 /**
  * Request location permission for Android
@@ -268,6 +273,8 @@ export const getCurrentLocation = async (): Promise<LocationInfo | null> => {
         const coordinates = await getCurrentPosition();
         // Reverse geocode to get city name
         const locationInfo = await reverseGeocode(coordinates);
+        // Save to cache
+        await saveLocationToCache(locationInfo);
         return locationInfo;
       } catch (error: any) {
         // Handle timeout or other location errors gracefully
@@ -289,6 +296,8 @@ export const getCurrentLocation = async (): Promise<LocationInfo | null> => {
           const coordinates = await getCurrentPosition();
           // Reverse geocode to get city name
           const locationInfo = await reverseGeocode(coordinates);
+          // Save to cache
+          await saveLocationToCache(locationInfo);
           return locationInfo;
         } catch (error: any) {
           // Handle timeout or other location errors gracefully
@@ -306,6 +315,63 @@ export const getCurrentLocation = async (): Promise<LocationInfo | null> => {
   } catch (error) {
     console.error('Error getting current location:', error);
     return null;
+  }
+};
+
+/**
+ * Save location to cache
+ */
+export const saveLocationToCache = async (locationInfo: LocationInfo): Promise<void> => {
+  try {
+    const cachedLocations = await getCachedLocations();
+    
+    // Add timestamp
+    const locationWithTimestamp: LocationInfo = {
+      ...locationInfo,
+      timestamp: Date.now(),
+    };
+
+    // Remove duplicate if exists (same city)
+    const filtered = cachedLocations.filter(
+      (loc) => loc.city !== locationInfo.city
+    );
+
+    // Add new location at the beginning
+    const updated = [locationWithTimestamp, ...filtered];
+
+    // Keep only last MAX_CACHED_LOCATIONS
+    const trimmed = updated.slice(0, MAX_CACHED_LOCATIONS);
+
+    await AsyncStorage.setItem(CACHED_LOCATIONS_KEY, JSON.stringify(trimmed));
+  } catch (error) {
+    console.error('Error saving location to cache:', error);
+  }
+};
+
+/**
+ * Get all cached locations
+ */
+export const getCachedLocations = async (): Promise<LocationInfo[]> => {
+  try {
+    const cached = await AsyncStorage.getItem(CACHED_LOCATIONS_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+    return [];
+  } catch (error) {
+    console.error('Error getting cached locations:', error);
+    return [];
+  }
+};
+
+/**
+ * Clear all cached locations
+ */
+export const clearCachedLocations = async (): Promise<void> => {
+  try {
+    await AsyncStorage.removeItem(CACHED_LOCATIONS_KEY);
+  } catch (error) {
+    console.error('Error clearing cached locations:', error);
   }
 };
 
