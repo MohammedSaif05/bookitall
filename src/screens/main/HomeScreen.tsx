@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/fonts';
 import { useUserStore } from '../../store/userStore';
@@ -61,6 +62,10 @@ const HomeScreen = () => {
     }
 
     try {
+      // Check if notification has been registered before for this userId
+      const notificationKey = `@bookitall:notification_registered:${userId}`;
+      const hasRegisteredBefore = await AsyncStorage.getItem(notificationKey);
+
       const deviceInfo = await getDeviceInfo();
 
       if (!deviceInfo.fcmToken) {
@@ -75,17 +80,29 @@ const HomeScreen = () => {
         appVersion: deviceInfo.appVersion,
       });
 
-      showSuccessToast({
-        message: 'Notifications Enabled',
-        description: 'You will now receive push notifications',
-      });
+      // Only show success toast on first registration
+      if (!hasRegisteredBefore) {
+        showSuccessToast({
+          message: 'Notifications Enabled',
+          description: 'You will now receive push notifications',
+        });
+        // Mark as registered for this userId
+        await AsyncStorage.setItem(notificationKey, 'true');
+      }
+      // Silently register on subsequent calls
     } catch (error: any) {
       console.error('Error registering device:', error);
-      const errorMessage = error?.message || 'Failed to register device for notifications';
-      showErrorToast({
-        message: 'Registration Failed',
-        description: errorMessage,
-      });
+      // Only show error toast if it's the first attempt
+      const notificationKey = `@bookitall:notification_registered:${userId}`;
+      const hasRegisteredBefore = await AsyncStorage.getItem(notificationKey);
+      
+      if (!hasRegisteredBefore) {
+        const errorMessage = error?.message || 'Failed to register device for notifications';
+        showErrorToast({
+          message: 'Registration Failed',
+          description: errorMessage,
+        });
+      }
     }
   };
 
