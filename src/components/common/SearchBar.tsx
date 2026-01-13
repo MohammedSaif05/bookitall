@@ -28,26 +28,40 @@ const SERVICE_TYPES = [
 
 const SearchBar: React.FC<SearchBarProps> = ({
   placeholder: customPlaceholder,
-  value,
+  value: controlledValue,
   onChangeText,
   onPress,
   editable = true,
 }) => {
   const inputRef = useRef<TextInput>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [internalValue, setInternalValue] = useState('');
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // Use controlled value if provided, otherwise use internal state
+  const value = controlledValue !== undefined ? controlledValue : internalValue;
+  const handleChangeText = (text: string) => {
+    if (controlledValue === undefined) {
+      setInternalValue(text);
+    }
+    onChangeText?.(text);
+  };
 
   // Use custom placeholder if provided, otherwise use animated placeholder
   const useAnimatedPlaceholder = !customPlaceholder && !value;
 
   useEffect(() => {
     if (!useAnimatedPlaceholder) {
-      // Reset animations when not using animated placeholder
-      fadeAnim.setValue(1);
+      // Immediately hide animated placeholder when value exists
+      fadeAnim.setValue(0);
       slideAnim.setValue(0);
       return;
     }
+
+    // Reset and show when switching back to animated placeholder
+    fadeAnim.setValue(1);
+    slideAnim.setValue(0);
 
     // Start animation immediately
     const animate = () => {
@@ -113,7 +127,22 @@ const SearchBar: React.FC<SearchBarProps> = ({
         onPress={handleContainerPress}
         activeOpacity={1}
       >
-        {useAnimatedPlaceholder && (
+        <TextInput
+          ref={inputRef}
+          style={styles.input}
+          placeholder={useAnimatedPlaceholder ? '' : customPlaceholder || 'Search for services'}
+          placeholderTextColor={colors.text.tertiary}
+          value={value}
+          onChangeText={handleChangeText}
+          editable={editable}
+          autoCapitalize="none"
+          autoCorrect={false}
+          onBlur={() => {
+            // Dismiss keyboard when focus is lost
+            Keyboard.dismiss();
+          }}
+        />
+        {useAnimatedPlaceholder && !value && (
           <Animated.View
             style={[
               styles.animatedPlaceholderContainer,
@@ -129,21 +158,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
             </Text>
           </Animated.View>
         )}
-        <TextInput
-          ref={inputRef}
-          style={styles.input}
-          placeholder={useAnimatedPlaceholder ? '' : customPlaceholder || 'Search for services'}
-          placeholderTextColor={colors.text.tertiary}
-          value={value}
-          onChangeText={onChangeText}
-          editable={editable}
-          autoCapitalize="none"
-          autoCorrect={false}
-          onBlur={() => {
-            // Dismiss keyboard when focus is lost
-            Keyboard.dismiss();
-          }}
-        />
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.iconContainer}
