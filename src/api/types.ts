@@ -108,3 +108,21 @@ export interface GetCategoriesResponse {
   categories: Category[];
 }
 
+/**
+ * Promotions API Types
+ */
+export interface Promotion {
+  promotionId: string;
+  vendorId: string;
+  imageUrl: string;
+  category: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+export interface GetPromotionsResponse {
+  promotions: Promotion[];
+}
+

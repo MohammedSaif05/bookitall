@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Modal, ScrollView, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Modal, ScrollView, Keyboard, TouchableWithoutFeedback, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../../theme/colors';
@@ -23,7 +23,7 @@ import { showSuccessToast, showErrorToast } from '../../utils/toast';
 import LocationIcon from '../../assets/icons/svg/location.svg';
 import NotificationIcon from '../../assets/icons/svg/notification.svg';
 import DropDownIcon from '../../assets/icons/svg/drop_down.svg';
-import { SearchBar, CategoriesList } from '../../components/common';
+import { SearchBar, CategoriesList, SpotlightCarousel } from '../../components/common';
 
 const HomeScreen = () => {
   const userId = useUserStore((state) => state.userId);
@@ -34,11 +34,45 @@ const HomeScreen = () => {
   const [isLoadingCity, setIsLoadingCity] = useState<boolean>(true);
   const [showLocationModal, setShowLocationModal] = useState<boolean>(false);
   const [cachedLocations, setCachedLocations] = useState<LocationInfo[]>([]);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [categoriesRefreshKey, setCategoriesRefreshKey] = useState<number>(0);
+  const [promotionsRefreshKey, setPromotionsRefreshKey] = useState<number>(0);
+  const [isRefreshingAll, setIsRefreshingAll] = useState<boolean>(false);
+  const [permissionsComplete, setPermissionsComplete] = useState<boolean>(false);
 
   useEffect(() => {
-    checkAndRegisterNotifications();
-    fetchCustomerDetails();
-    checkAndGetLocation();
+    const initializeScreen = async () => {
+      // Check if permissions were already asked (in SuccessScreen)
+      const permissionsAsked = await AsyncStorage.getItem('@bookitall:permissions_asked');
+      
+      if (permissionsAsked === 'true') {
+        // Permissions were already asked, load all APIs immediately
+        setPermissionsComplete(true);
+        fetchCustomerDetails();
+        checkAndGetLocation(); // Still get location, but don't request permission again
+        checkAndRegisterNotifications(); // Still check notifications, but don't request permission again
+        // Trigger child components to load their data
+        setCategoriesRefreshKey(1);
+        setPromotionsRefreshKey(1);
+      } else {
+        // Permissions not asked yet (shouldn't happen, but handle gracefully)
+        // First handle notification permission (will show native dialog if needed)
+        await checkAndRegisterNotifications();
+        // Then handle location permission after notification permission completes (will show native dialog if needed)
+        await checkAndGetLocation();
+        // Mark permissions as complete
+        setPermissionsComplete(true);
+        // Now load all APIs after permissions are shown/handled
+        fetchCustomerDetails();
+        // Trigger child components to load their data
+        setCategoriesRefreshKey(1);
+        setPromotionsRefreshKey(1);
+        // Mark that permissions were asked (fallback)
+        await AsyncStorage.setItem('@bookitall:permissions_asked', 'true');
+      }
+    };
+    
+    initializeScreen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
@@ -214,10 +248,45 @@ const HomeScreen = () => {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setIsRefreshingAll(true);
+    
+    try {
+      // Refresh all APIs in parallel
+      await Promise.all([
+        // Refresh customer details
+        (async (): Promise<void> => {
+          setIsLoadingCustomerName(true);
+          await fetchCustomerDetails();
+        })(),
+        // Refresh location
+        (async (): Promise<void> => {
+          setIsLoadingCity(true);
+          await checkAndGetLocation();
+        })(),
+      ]);
+
+      // Force refresh categories and promotions by updating the keys
+      setCategoriesRefreshKey((prev) => prev + 1);
+      setPromotionsRefreshKey((prev) => prev + 1);
+
+      // Wait a bit to allow child components to finish loading
+      // This gives time for CategoriesList and SpotlightCarousel to fetch their data
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 800);
+      });
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsRefreshingAll(false);
+      setRefreshing(false);
+    }
+  };
+
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        {/* Header */}
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* Header */}
       <View style={styles.header}>
         {/* Left side - Greeting and Location */}
         <View style={styles.headerLeft}>
@@ -249,13 +318,63 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchBarContainer}>
-        <SearchBar />
-      </View>
+      {/* Scrollable Content */}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          scrollEnabled={true}
+          bounces={true}
+          alwaysBounceVertical={true}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.background.black]}
+              tintColor={colors.background.black}
+            />
+          }
+        >
+        {/* Search Bar */}
+        <View style={styles.searchBarContainer}>
+          <SearchBar />
+        </View>
 
-      {/* Categories List */}
-      <CategoriesList />
+        {/* Categories List - Only load after permissions */}
+        {permissionsComplete && (
+          <CategoriesList refreshKey={categoriesRefreshKey} />
+        )}
+
+        {/* Spotlight Carousel - Only load after permissions */}
+        {permissionsComplete && (
+          <SpotlightCarousel refreshKey={promotionsRefreshKey} />
+        )}
+
+        {/* Content */}
+        <View style={styles.content}>
+          <Text style={styles.title}>Home</Text>
+          <Text style={styles.subtitle}>
+            {isCheckingPermissions
+              ? 'Setting up notifications...'
+              : 'This screen will be built later'}
+          </Text>
+        </View>
+      </ScrollView>
+      </TouchableWithoutFeedback>
+
+      {/* Loading Overlay during refresh */}
+      {isRefreshingAll && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.background.black} />
+            <Text style={styles.loadingText}>Refreshing...</Text>
+          </View>
+        </View>
+      )}
 
       {/* Location Picker Modal */}
       <Modal
@@ -330,18 +449,7 @@ const HomeScreen = () => {
           </View>
         </TouchableOpacity>
       </Modal>
-
-      {/* Content */}
-      <View style={styles.content}>
-        <Text style={styles.title}>Home</Text>
-        <Text style={styles.subtitle}>
-          {isCheckingPermissions
-            ? 'Setting up notifications...'
-            : 'This screen will be built later'}
-        </Text>
-      </View>
-      </SafeAreaView>
-    </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 };
 
@@ -361,6 +469,13 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: vs(20),
   },
   searchBarContainer: {
     paddingHorizontal: hs(20),
@@ -405,11 +520,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: hs(24),
+    paddingTop: vs(20),
+    paddingBottom: vs(20),
     backgroundColor: colors.background.white,
+    minHeight: vs(200),
   },
   title: {
     ...typography.h1,
@@ -523,6 +640,27 @@ const styles = StyleSheet.create({
     color: colors.text.white,
     fontSize: ms(14),
     fontFamily: fonts.manrope.bold,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: vs(16),
+    fontFamily: fonts.manrope.medium,
+    fontSize: ms(16),
+    color: colors.text.title,
   },
 });
 

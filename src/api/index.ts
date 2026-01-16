@@ -13,3 +13,7 @@ export { authApi };
 import * as categoriesApi from './categories';
 export { categoriesApi };
 
+// Export promotions API functions
+import * as promotionsApi from './promotions';
+export { promotionsApi };
+

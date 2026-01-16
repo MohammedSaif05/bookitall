@@ -14,6 +14,7 @@ import CategoryCard from './CategoryCard';
 
 interface CategoriesListProps {
   onCategoryPress?: (category: Category) => void;
+  refreshKey?: number;
 }
 
 const CACHE_KEY = '@bookitall:cached_categories';
@@ -24,13 +25,18 @@ interface CachedCategories {
   timestamp: number;
 }
 
-const CategoriesList: React.FC<CategoriesListProps> = ({ onCategoryPress }) => {
+const CategoriesList: React.FC<CategoriesListProps> = ({ onCategoryPress, refreshKey }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCategories = async (bypassCache: boolean = false) => {
       try {
+        // If bypassing cache, clear it first
+        if (bypassCache) {
+          await AsyncStorage.removeItem(CACHE_KEY);
+        }
+
         const data = await categoriesApi.getCategories();
         setCategories(data);
         setIsLoading(false);
@@ -50,6 +56,12 @@ const CategoriesList: React.FC<CategoriesListProps> = ({ onCategoryPress }) => {
     const loadCategories = async () => {
       try {
         setIsLoading(true);
+
+        // If refreshKey is provided, bypass cache and force refresh
+        if (refreshKey !== undefined && refreshKey > 0) {
+          await fetchCategories(true);
+          return;
+        }
 
         // Try to load from cache first
         const cached = await AsyncStorage.getItem(CACHE_KEY);
@@ -76,7 +88,7 @@ const CategoriesList: React.FC<CategoriesListProps> = ({ onCategoryPress }) => {
     };
 
     loadCategories();
-  }, []);
+  }, [refreshKey]);
 
   if (isLoading && categories.length === 0) {
     return (
@@ -96,6 +108,8 @@ const CategoriesList: React.FC<CategoriesListProps> = ({ onCategoryPress }) => {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        nestedScrollEnabled={true}
+        scrollEnabled={true}
       >
         {categories.map((category) => (
           <CategoryCard
