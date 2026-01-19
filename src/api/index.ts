@@ -17,3 +17,7 @@ export { categoriesApi };
 import * as promotionsApi from './promotions';
 export { promotionsApi };
 
+// Export businesses API functions
+import * as businessesApi from './businesses';
+export { businessesApi };
+

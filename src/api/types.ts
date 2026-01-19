@@ -126,3 +126,35 @@ export interface GetPromotionsResponse {
   promotions: Promotion[];
 }
 
+/**
+ * Businesses API Types
+ */
+export interface BusinessRating {
+  average: number;
+  count: number;
+}
+
+export interface BusinessPriceRange {
+  type: 'range' | string;
+  min: number;
+  max?: number;
+}
+
+export interface Business {
+  businessId: string;
+  businessName: string;
+  category: string;
+  city: string;
+  images: string[];
+  rating: BusinessRating;
+  distanceInKm: number;
+  price: BusinessPriceRange;
+}
+
+export interface NearbyBusinessesResponse {
+  businesses: Business[];
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
