@@ -3,7 +3,7 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import HomeScreen from './HomeScreen';
+import HomeStackNavigator from '../../navigation/HomeStackNavigator';
 import BookingsScreen from './BookingsScreen';
 import FavoritesScreen from './FavoritesScreen';
 import ProfileScreen from './ProfileScreen';
@@ -118,7 +118,7 @@ const DashboardTabs = () => {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStackNavigator}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused }) =>

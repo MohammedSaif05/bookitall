@@ -24,9 +24,11 @@ import LocationIcon from '../../assets/icons/svg/location.svg';
 import NotificationIcon from '../../assets/icons/svg/notification.svg';
 import DropDownIcon from '../../assets/icons/svg/drop_down.svg';
 import { SearchBar, CategoriesList, SpotlightCarousel, ServicesForYou } from '../../components/common';
+import { useNavigation } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const userId = useUserStore((state) => state.userId);
+  const navigation = useNavigation<any>();
   const [customerName, setCustomerName] = useState<string>('');
   const [isLoadingCustomerName, setIsLoadingCustomerName] = useState(true);
   const [cityName, setCityName] = useState<string>('');
@@ -342,7 +344,15 @@ const HomeScreen = () => {
 
         {/* Categories List - Only load after permissions */}
         {permissionsComplete && (
-          <CategoriesList refreshKey={categoriesRefreshKey} />
+          <CategoriesList
+            refreshKey={categoriesRefreshKey}
+            onCategoryPress={(category) =>
+              navigation.navigate('CategoryListing', {
+                categorySlug: category.slug,
+                categoryName: category.name,
+              })
+            }
+          />
         )}
 
         {/* Spotlight Carousel - Only load after permissions */}

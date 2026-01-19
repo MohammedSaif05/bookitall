@@ -27,6 +27,10 @@ const CARD_IMAGE_HEIGHT = vs(140);
 
 interface ServicesForYouProps {
   refreshKey?: number;
+  categorySlug?: string;
+  showTitle?: boolean;
+  titleText?: string;
+  emptyMessage?: string;
 }
 
 interface BusinessCardProps {
@@ -134,7 +138,13 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business }) => {
   );
 };
 
-const ServicesForYou: React.FC<ServicesForYouProps> = ({ refreshKey }) => {
+const ServicesForYou: React.FC<ServicesForYouProps> = ({
+  refreshKey,
+  categorySlug,
+  showTitle = true,
+  titleText = 'Services for you',
+  emptyMessage = "We're sorry, but we are currently building in your location. See you soon!",
+}) => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -147,7 +157,7 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({ refreshKey }) => {
       if (append) {
         setIsLoadingMore(true);
       }
-      const data: NearbyBusinessesResponse = await businessesApi.getNearbyBusinesses(lat, lng, page);
+      const data: NearbyBusinessesResponse = await businessesApi.getNearbyBusinesses(lat, lng, page, categorySlug);
       if (append) {
         setBusinesses((prev) => [...prev, ...data.businesses]);
       } else {
@@ -166,7 +176,7 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({ refreshKey }) => {
         setIsLoadingMore(false);
       }
     }
-  }, []);
+  }, [categorySlug]);
 
   const fetchLocationAndBusinesses = useCallback(async () => {
     try {
@@ -203,14 +213,16 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({ refreshKey }) => {
 
   return (
     <View style={styles.container}>
-      {/* Services for you Title */}
-      <View style={styles.titleContainer}>
-        <View style={styles.titleLine} />
-        <View style={styles.titleTextContainer}>
-          <Text style={styles.titleText}>Services for you</Text>
+      {/* Title */}
+      {showTitle && (
+        <View style={styles.titleContainer}>
+          <View style={styles.titleLine} />
+          <View style={styles.titleTextContainer}>
+            <Text style={styles.titleText}>{titleText}</Text>
+          </View>
+          <View style={styles.titleLine} />
         </View>
-        <View style={styles.titleLine} />
-      </View>
+      )}
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -219,7 +231,7 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({ refreshKey }) => {
       ) : businesses.length === 0 ? (
         <View style={styles.emptyStateContainer}>
           <Text style={styles.emptyStateText}>
-            We're sorry, but we are currently building in your location. See you soon!
+            {emptyMessage}
           </Text>
         </View>
       ) : (
@@ -347,8 +359,8 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: '#F8F9FA',
     paddingHorizontal: hs(16),
-    paddingTop: vs(10),
-    paddingBottom: vs(10),
+    paddingTop: vs(6),
+    paddingBottom: vs(6),
     position: 'relative',
   },
   priceOverlay: {
@@ -378,15 +390,15 @@ const styles = StyleSheet.create({
   },
   businessName: {
     fontFamily: fonts.manrope.bold,
-    fontSize: ms(18),
+    fontSize: ms(16),
     color: colors.text.title,
-    marginBottom: vs(2),
+    marginBottom: vs(1),
   },
   categoryCity: {
     fontFamily: fonts.manrope.regular,
-    fontSize: ms(14),
+    fontSize: ms(13),
     color: colors.text.title,
-    marginBottom: vs(4),
+    marginBottom: vs(2),
   },
   ratingDistanceContainer: {
     flexDirection: 'row',
@@ -395,19 +407,19 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontFamily: fonts.manrope.regular,
-    fontSize: ms(14),
+    fontSize: ms(13),
     color: colors.text.title,
     marginLeft: hs(4),
   },
   separator: {
     fontFamily: fonts.manrope.regular,
-    fontSize: ms(14),
+    fontSize: ms(13),
     color: colors.text.title,
     marginHorizontal: hs(6),
   },
   distanceText: {
     fontFamily: fonts.manrope.regular,
-    fontSize: ms(14),
+    fontSize: ms(13),
     color: colors.text.title,
   },
   arrowContainer: {
