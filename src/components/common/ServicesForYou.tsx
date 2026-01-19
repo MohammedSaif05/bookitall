@@ -347,8 +347,8 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: '#F8F9FA',
     paddingHorizontal: hs(16),
-    paddingTop: vs(16),
-    paddingBottom: vs(16),
+    paddingTop: vs(10),
+    paddingBottom: vs(10),
     position: 'relative',
   },
   priceOverlay: {
@@ -378,20 +378,20 @@ const styles = StyleSheet.create({
   },
   businessName: {
     fontFamily: fonts.manrope.bold,
-    fontSize: ms(20),
+    fontSize: ms(18),
     color: colors.text.title,
-    marginBottom: vs(4),
+    marginBottom: vs(2),
   },
   categoryCity: {
     fontFamily: fonts.manrope.regular,
     fontSize: ms(14),
     color: colors.text.title,
-    marginBottom: vs(8),
+    marginBottom: vs(4),
   },
   ratingDistanceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: vs(4),
+    marginBottom: 0,
   },
   ratingText: {
     fontFamily: fonts.manrope.regular,

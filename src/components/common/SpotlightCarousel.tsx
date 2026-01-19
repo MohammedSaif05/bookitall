@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: vs(16),
+    marginTop: vs(8),
     paddingHorizontal: hs(20),
   },
   paginationWrapper: {

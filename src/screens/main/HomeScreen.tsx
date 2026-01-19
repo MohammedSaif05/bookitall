@@ -455,8 +455,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     backgroundColor: colors.background.white,
     paddingHorizontal: hs(20),
-    paddingTop: vs(16),
-    paddingBottom: vs(16),
+    paddingTop: 0,
+    paddingBottom: vs(10),
   },
   headerLeft: {
     flex: 1,
@@ -503,9 +503,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   notificationIconContainer: {
-    width: ms(40),
-    height: ms(40),
-    borderRadius: ms(20),
+    width: ms(36),
+    height: ms(36),
+    borderRadius: ms(18),
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
