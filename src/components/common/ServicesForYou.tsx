@@ -31,6 +31,7 @@ interface ServicesForYouProps {
   showTitle?: boolean;
   titleText?: string;
   emptyMessage?: string;
+  sort?: 'rating' | 'distance';
 }
 
 interface BusinessCardProps {
@@ -144,6 +145,7 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({
   showTitle = true,
   titleText = 'Services for you',
   emptyMessage = "We're sorry, but we are currently building in your location. See you soon!",
+  sort,
 }) => {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,7 +159,7 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({
       if (append) {
         setIsLoadingMore(true);
       }
-      const data: NearbyBusinessesResponse = await businessesApi.getNearbyBusinesses(lat, lng, page, categorySlug);
+      const data: NearbyBusinessesResponse = await businessesApi.getNearbyBusinesses(lat, lng, page, categorySlug, sort);
       if (append) {
         setBusinesses((prev) => [...prev, ...data.businesses]);
       } else {
@@ -176,7 +178,7 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({
         setIsLoadingMore(false);
       }
     }
-  }, [categorySlug]);
+  }, [categorySlug, sort]);
 
   const fetchLocationAndBusinesses = useCallback(async () => {
     try {

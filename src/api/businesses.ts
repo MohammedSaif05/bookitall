@@ -12,7 +12,8 @@ export const getNearbyBusinesses = async (
   latitude: number,
   longitude: number,
   page: number = 1,
-  category?: string
+  category?: string,
+  sort?: string
 ): Promise<NearbyBusinessesResponse> => {
   try {
     const response = await apiClient.get<ApiResponse<NearbyBusinessesResponse>>(
@@ -23,6 +24,7 @@ export const getNearbyBusinesses = async (
           lng: longitude,
           page,
           ...(category ? { category } : {}),
+          ...(sort ? { sort } : {}),
         },
       }
     );
