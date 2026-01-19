@@ -23,7 +23,7 @@ import RatingStar from '../../assets/icons/svg/rating_star.svg';
 import RightArrow from '../../assets/icons/svg/right_arrow.svg';
 
 const CARD_PADDING = hs(20);
-const CARD_IMAGE_HEIGHT = vs(200);
+const CARD_IMAGE_HEIGHT = vs(140);
 
 interface ServicesForYouProps {
   refreshKey?: number;
@@ -94,14 +94,14 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business }) => {
             <Text style={styles.placeholderText}>No Image</Text>
           </View>
         )}
+        {/* Price Overlay - Bottom Right of Image */}
+        <View style={styles.priceOverlay}>
+          <Text style={styles.priceText}>{formatPrice()}</Text>
+        </View>
       </View>
 
       {/* Information Card */}
       <View style={styles.infoCard}>
-        {/* Price Overlay */}
-        <View style={styles.priceOverlay}>
-          <Text style={styles.priceText}>{formatPrice()}</Text>
-        </View>
 
         {/* Business Name */}
         <Text style={styles.businessName}>{business.businessName}</Text>
@@ -127,7 +127,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business }) => {
 
         {/* Right Arrow */}
         <View style={styles.arrowContainer}>
-          <RightArrow width={ms(24)} height={ms(24)} />
+          <RightArrow width={ms(18)} height={ms(18)} />
         </View>
       </View>
     </View>
@@ -201,18 +201,6 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({ refreshKey }) => {
     await fetchBusinesses(coordinates.latitude, coordinates.longitude, nextPage, true);
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color={colors.text.primary} />
-      </View>
-    );
-  }
-
-  if (businesses.length === 0) {
-    return null;
-  }
-
   return (
     <View style={styles.container}>
       {/* Services for you Title */}
@@ -224,35 +212,46 @@ const ServicesForYou: React.FC<ServicesForYouProps> = ({ refreshKey }) => {
         <View style={styles.titleLine} />
       </View>
 
-      {/* Business Cards */}
-      <View style={styles.cardsContainer}>
-        {businesses.map((business) => (
-          <BusinessCard key={business.businessId} business={business} />
-        ))}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={colors.text.primary} />
+        </View>
+      ) : businesses.length === 0 ? (
+        <View style={styles.emptyStateContainer}>
+          <Text style={styles.emptyStateText}>
+            We're sorry, but we are currently building in your location. See you soon!
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.cardsContainer}>
+          {businesses.map((business) => (
+            <BusinessCard key={business.businessId} business={business} />
+          ))}
 
-        {/* Show More Button */}
-        {hasMore && (
-          <TouchableOpacity
-            style={styles.showMoreButton}
-            onPress={handleShowMore}
-            activeOpacity={0.7}
-            disabled={isLoadingMore}
-          >
-            {isLoadingMore ? (
-              <ActivityIndicator size="small" color={colors.text.primary} />
-            ) : (
-              <Text style={styles.showMoreText}>Show more</Text>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
+          {/* Show More Button */}
+          {hasMore && (
+            <TouchableOpacity
+              style={styles.showMoreButton}
+              onPress={handleShowMore}
+              activeOpacity={0.7}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? (
+                <ActivityIndicator size="small" color={colors.text.primary} />
+              ) : (
+                <Text style={styles.showMoreText}>Show more</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: vs(16),
+    marginTop: 0,
     marginBottom: vs(16),
   },
   titleContainer: {
@@ -354,10 +353,13 @@ const styles = StyleSheet.create({
   },
   priceOverlay: {
     position: 'absolute',
-    top: vs(-12),
-    right: hs(16),
+    bottom: vs(0),
+    right: hs(0),
     backgroundColor: '#F8F9FA',
-    borderRadius: ms(8),
+    borderTopLeftRadius: ms(8),
+    borderTopRightRadius: ms(8),
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     paddingHorizontal: hs(12),
     paddingVertical: vs(6),
     shadowColor: '#000',
@@ -428,6 +430,19 @@ const styles = StyleSheet.create({
     paddingVertical: vs(40),
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  emptyStateContainer: {
+    paddingVertical: vs(40),
+    paddingHorizontal: hs(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyStateText: {
+    fontFamily: fonts.manrope.regular,
+    fontSize: ms(14),
+    color: colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: ms(20),
   },
 });
 

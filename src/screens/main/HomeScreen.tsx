@@ -27,7 +27,6 @@ import { SearchBar, CategoriesList, SpotlightCarousel, ServicesForYou } from '..
 
 const HomeScreen = () => {
   const userId = useUserStore((state) => state.userId);
-  const [isCheckingPermissions, setIsCheckingPermissions] = useState(true);
   const [customerName, setCustomerName] = useState<string>('');
   const [isLoadingCustomerName, setIsLoadingCustomerName] = useState(true);
   const [cityName, setCityName] = useState<string>('');
@@ -166,7 +165,6 @@ const HomeScreen = () => {
 
   const checkAndRegisterNotifications = async () => {
     if (!userId) {
-      setIsCheckingPermissions(false);
       return;
     }
 
@@ -193,8 +191,6 @@ const HomeScreen = () => {
       }
     } catch (error) {
       console.error('Error checking notification permissions:', error);
-    } finally {
-      setIsCheckingPermissions(false);
     }
   };
 
@@ -358,16 +354,6 @@ const HomeScreen = () => {
         {permissionsComplete && (
           <ServicesForYou refreshKey={promotionsRefreshKey} />
         )}
-
-        {/* Content */}
-        <View style={styles.content}>
-          <Text style={styles.title}>Home</Text>
-          <Text style={styles.subtitle}>
-            {isCheckingPermissions
-              ? 'Setting up notifications...'
-              : 'This screen will be built later'}
-          </Text>
-        </View>
       </ScrollView>
       </TouchableWithoutFeedback>
 
