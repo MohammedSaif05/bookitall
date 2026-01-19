@@ -158,3 +158,51 @@ export interface NearbyBusinessesResponse {
   hasMore: boolean;
 }
 
+/**
+ * Business Details API Types
+ */
+export interface BusinessAddress {
+  address: string;
+  landmark: string;
+  city: string;
+}
+
+export interface BusinessTiming {
+  day: string;
+  open: string;
+  close: string;
+  breaks: any[];
+  isClosed: boolean;
+}
+
+export interface BusinessService {
+  serviceId: string;
+  serviceName: string;
+  price: number;
+  durationInMinutes: number;
+  serviceImage: string;
+}
+
+export interface BusinessReview {
+  userName: string;
+  rating: number;
+  review: string;
+  createdAt: string;
+}
+
+export interface BusinessDetails {
+  business: {
+    businessId: string;
+    businessName: string;
+    category: string;
+    city: string;
+    images: string[];
+    rating: BusinessRating;
+    address: BusinessAddress;
+    distanceInKm: number;
+  };
+  timings: BusinessTiming[];
+  services: BusinessService[];
+  reviews: BusinessReview[];
+}
+

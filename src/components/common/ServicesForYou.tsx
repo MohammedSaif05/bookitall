@@ -12,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import PagerView from 'react-native-pager-view';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
@@ -39,8 +40,15 @@ interface BusinessCardProps {
 }
 
 const BusinessCard: React.FC<BusinessCardProps> = ({ business }) => {
+  const navigation = useNavigation<any>();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const pagerRef = useRef<PagerView>(null);
+
+  const handleCardPress = () => {
+    navigation.navigate('BusinessDetails', {
+      businessId: business.businessId,
+    });
+  };
 
   const formatPrice = () => {
     if (business.price.type === 'range' && business.price.max) {
@@ -57,7 +65,11 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business }) => {
   };
 
   return (
-    <View style={styles.businessCard}>
+    <TouchableOpacity
+      style={styles.businessCard}
+      activeOpacity={0.9}
+      onPress={handleCardPress}
+    >
       {/* Image Carousel */}
       <View style={styles.imageContainer}>
         {business.images.length > 0 ? (
@@ -135,7 +147,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ business }) => {
           <RightArrow width={ms(18)} height={ms(18)} />
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

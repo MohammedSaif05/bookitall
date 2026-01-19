@@ -29,6 +29,28 @@ type DashboardTabParamList = {
 const Tab = createBottomTabNavigator<DashboardTabParamList>();
 
 const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  // Check if we're on a screen that should hide the tab bar
+  const currentRoute = state.routes[state.index];
+  const currentRouteName = currentRoute?.name;
+  
+  // Get nested route name if we're in Home stack
+  let shouldHideTabBar = false;
+  if (currentRouteName === 'Home') {
+    const homeState = currentRoute.state as any;
+    if (homeState && homeState.routes && homeState.index !== undefined) {
+      const nestedRoute = homeState.routes[homeState.index];
+      const nestedRouteName = nestedRoute?.name;
+      if (nestedRouteName === 'CategoryListing' || nestedRouteName === 'BusinessDetails') {
+        shouldHideTabBar = true;
+      }
+    }
+  }
+
+  // Hide tab bar if needed
+  if (shouldHideTabBar) {
+    return null;
+  }
+
   // Split routes into left (Home, Bookings) and right (Favorites, Profile) groups
   const leftRoutes = state.routes.slice(0, 2); // Home, Bookings
   const rightRoutes = state.routes.slice(2); // Favorites, Profile
