@@ -26,7 +26,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onPress }) => {
         <Image
           source={{ uri: category.image }}
           style={styles.image}
-          resizeMode="cover"
+          resizeMode="contain"
         />
       </View>
       <Text style={styles.name} numberOfLines={1}>
@@ -45,15 +45,9 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: ms(80),
     height: ms(80),
-    borderRadius: ms(40), // Circular (half of width/height)
+    borderRadius: ms(0),
     overflow: 'hidden',
-    backgroundColor: colors.background.primary,
     marginBottom: vs(8),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   image: {
     width: '100%',
